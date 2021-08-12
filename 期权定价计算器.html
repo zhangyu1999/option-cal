@@ -1,0 +1,187 @@
+<html>
+
+<head>
+  <title>期权定价计算器</title>
+  <style type="text/css">
+    body {
+      font-family: Arial, sans-serif;
+    }
+  </style>
+  <script>    
+
+function fbs() {
+  var cop=document.getElementById("cop").selectedIndex;
+  var S = parseFloat(document.getElementById("S").value);
+  var X = parseFloat(document.getElementById("L").value);
+  var r = parseFloat(document.getElementById("r").value);
+  var v = parseFloat(document.getElementById("vol").value);
+  var T = parseFloat(document.getElementById("t").value);
+
+//欧式期权：
+if (cop<2){
+var d1, d2;
+
+d1 = (Math.log(S / X) + (r + v * v / 2.0) * T) / (v * Math.sqrt(T));
+d2 = d1 - v * Math.sqrt(T);
+
+if (cop==0)
+var result= S * CND(d1)-X * Math.exp(-r * T) * CND(d2);
+else
+var result=X * Math.exp(-r * T) * CND(-d2) - S * CND(-d1);
+document.getElementById("output").innerHTML = "期权价格: " + result + "</br>";
+}
+//美式期权：
+else{
+if (cop == 2)
+{
+var N=2000;
+var t = T/N;
+var u = Math.exp(v*Math.sqrt(t));
+var d=1/u;
+var a = Math.exp(r*t);
+var p = (a-d)/(u-d);
+
+var SM = new Array();  
+for(var k=0;k<=(N+1);k++){    
+SM[k]=new Array();  
+for(var j=0;j<=(N+1);j++){   
+SM[k][j]=0;   
+ }
+}
+
+for(i=0;i<=N;i++){
+for(j=0;j<=i;j++){
+        SM[i+1][j+1] = S*(u**j)*(d**(i-j));
+}}
+
+var VM = new Array()
+for(i=0;i<=N;i++){
+    VM[i+1] = Math.max(-SM[N+1][i+1]+X,0);
+}
+
+var Vn = new Array()
+for(j=1;j<=N;j++){
+    for (i=1;i<=(VM.length-1);i++){
+        St = Math.max(X-SM[N+1-j][i],0);
+        no=Math.exp(-r*t)*((1-p)*VM[i]+p*VM[i+1]);
+        if (St >= no){
+            Vn[i] = St;
+		}
+        else{
+            Vn[i] = no;
+		}
+	}
+    VM = Vn;
+    Vn =new Array() ;
+}
+document.getElementById("output").innerHTML = "期权价格: " + VM[1] + "</br>";
+}
+else{
+var N=2000;
+var t = T/N;
+var u = Math.exp(v*Math.sqrt(t));
+var d=1/u;
+var a = Math.exp(r*t);
+var p = (a-d)/(u-d);
+
+var SM = new Array();
+for(var k=0;k<=(N+1);k++){  
+SM[k]=new Array();
+for(var j=0;j<=(N+1);j++){
+SM[k][j]=0;   
+ }
+}
+
+for(i=0;i<=N;i++){
+for(j=0;j<=i;j++){
+        SM[i+1][j+1] = S*(u**j)*(d**(i-j));
+}}
+
+var VM = new Array()
+for(i=0;i<=N;i++){
+    VM[i+1] = Math.max(SM[N+1][i+1]-X,0);
+}
+
+var Vn = new Array()
+for(j=1;j<=N;j++){
+    for (i=1;i<=(VM.length-1);i++){
+        St = Math.max(SM[N+1-j][i]-X,0);
+        no=Math.exp(-r*t)*((1-p)*VM[i]+p*VM[i+1]);
+        if (St >= no){
+            Vn[i] = St;
+		}
+        else{
+            Vn[i] = no;
+		}
+	}
+    VM = Vn;
+    Vn =new Array() ;
+}
+document.getElementById("output").innerHTML = "期权价格: " + VM[1] + "</br>";
+}
+}
+
+}
+
+/* The cummulative Normal distribution function: */
+
+function CND(x){
+var a1, a2, a3, a4 ,a5, k ;
+
+a1 = 0.31938153, a2 =-0.356563782, a3 = 1.781477937, a4= -1.821255978 , a5= 1.330274429;
+
+if(x<0.0)
+return 1-CND(-x);
+else
+k = 1.0 / (1.0 + 0.2316419 * x);
+return 1.0 - Math.exp(-x * x / 2.0)/ Math.sqrt(2*Math.PI) * k
+* (a1 + k * (-0.356563782 + k * (1.781477937 + k * (-1.821255978 + k * 1.330274429)))) ;
+}
+
+  </script>
+</head>
+<body>
+  <h2>期权定价计算器</h2>
+<h4>张钰 517070910067 杨悦然 517070910121 <h4>
+<table width="100%" class="tb-01">
+      <tbody>
+      <tr>
+        <td scope="row">股票现价</td>
+        <td><input type="text" value="42" name="S" id="S" maxlength="9" lable="当前价格"></td>
+        <td>股价波动率</td>
+        <td><input type="text" value="0.2" name="vol" id="vol" maxlength="9" lable="股价波动率">  </td>
+      </tr>
+      <tr>
+        <td scope="row">行权价格</td>
+        <td><input type="text" value="40" name="L" id="L" maxlength="9" lable="行权价格"></td>
+        <td>期权时效(年)</td>
+        <td><input type="text" value="0.5" name="t" id="t" lable="期权时效"></td>
+      </tr>
+      <tr>
+        <td scope="row">无风险利率</td>
+        <td><input type="text" value="0.1" name="r" id="r" lable="无风险利率" maxlength="9"></td>
+        <td>期权类型</td>
+        <td>
+        <select id="cop">
+            <option value="0">欧式看涨期权(European call option)</option>
+            <option value="1">欧式看跌期权(European put option)</option>
+            <option value="2">美式看涨期权(American call option)</option>
+            <option value="3">美式看跌期权(American put option)</option>
+          </select>
+          </td>
+      </tr>
+      <tr id="calculateTr">
+        <td colspan="4" scope="row" style="text-align:center;"><input type="button" name="button2" id="button2" value="计算" onclick="fbs()" >
+      </tr>
+
+    </tbody>
+</table>
+<h3>备注</h3>
+    <ul>
+      <li>对于欧式期权，采用Black-Scholes公式求解 </li>
+      <li>对于美式期权，采用二叉树方法近似求解。 </li>
+    </ul>
+  <div id="output"></div>
+</body>
+
+ </html>
